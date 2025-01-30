@@ -16,6 +16,7 @@ export const POST = async (req: Request) => {
     const email = body.data.email_addresses[0].email_address;
     const firstName = body.data.first_name || "Unknown";
     const lastName = body.data.last_name || "";
+    const Phone = body.data.phone || null; // Extract phone number (default to null if missing)
     const imageUrl = body.data.image_url || null;
     const id = body.data.id || crypto.randomUUID(); // Generate random ID if missing
     const name = `${firstName} ${lastName}`.trim();
@@ -23,11 +24,12 @@ export const POST = async (req: Request) => {
     // Perform upsert operation (create or update user)
     const user = await db.user.upsert({
       where: { id },
-      update: { email, name, imageUrl, updatedAt: new Date() },
+      update: { email, name, Phone, imageUrl, updatedAt: new Date() },
       create: {
         id,
         email,
         name,
+        Phone,
         imageUrl,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -44,7 +46,7 @@ export const POST = async (req: Request) => {
 
     // Respond with error message
     return new Response(
-      JSON.stringify({ message: "Internal Server Error"}),
+      JSON.stringify({ message: "Internal Server Error" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
