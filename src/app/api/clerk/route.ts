@@ -51,4 +51,3 @@ export const POST = async (req: Request) => {
     );
   }
 };
-// thina ar e
