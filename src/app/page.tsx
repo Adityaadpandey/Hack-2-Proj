@@ -1,4 +1,5 @@
 import Main from "@/components/Main";
+import { FloatingDockDemo } from "@/components/ui/FloatingDockDemo";
 import { ArrowRight, Clock, MessageCircle, Shield } from 'lucide-react';
 
 export default function Home() {
@@ -85,6 +86,9 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </div>
+      <div>
+        <FloatingDockDemo />
       </div>
     </div>
   );
