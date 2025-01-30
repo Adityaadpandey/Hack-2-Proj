@@ -1,13 +1,14 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
+import { ClerkProvider, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"; // Import Clerk
 import {
     IconBrandGithub,
     IconBrandX,
     IconExchange,
     IconHome,
     IconNewSection,
+    IconSearch,
     IconTerminal2,
 } from "@tabler/icons-react";
-import Image from "next/image";
 
 export function FloatingDockDemo() {
     const links = [
@@ -18,62 +19,52 @@ export function FloatingDockDemo() {
             ),
             href: "#",
         },
-
         {
-            title: "Products",
+            title: "Explore",
+            icon: (
+                <IconSearch className="h-full w-full text-neutral-500 dark:text-neutral-300" />
+            ),
+            href: "#", // Change this to your Explore page link
+        },
+        {
+            title: "Chatbot",
             icon: (
                 <IconTerminal2 className="h-full w-full text-neutral-500 dark:text-neutral-300" />
             ),
-            href: "#",
+            href: "#", // Change this to your Chatbot page link
         },
         {
-            title: "Components",
+            title: "Signin",
             icon: (
                 <IconNewSection className="h-full w-full text-neutral-500 dark:text-neutral-300" />
             ),
-            href: "#",
-        },
-        {
-            title: "Aceternity UI",
-            icon: (
-                <Image
-                    src="https://assets.aceternity.com/logo-dark.png"
-                    width={20}
-                    height={20}
-                    alt="Aceternity Logo"
-                />
-            ),
-            href: "#",
-        },
-        {
-            title: "Changelog",
-            icon: (
-                <IconExchange className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
-            href: "#",
-        },
-
-        {
-            title: "Twitter",
-            icon: (
-                <IconBrandX className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
-            href: "#",
-        },
-        {
-            title: "GitHub",
-            icon: (
-                <IconBrandGithub className="h-full w-full text-neutral-500 dark:text-neutral-300" />
-            ),
-            href: "#",
+            href: "#", // This will be replaced by SignedIn and SignedOut logic
         },
     ];
+
     return (
         <div className="flex items-center justify-center w-full">
-            <FloatingDock
-                mobileClassName="translate-y-20" // only for demo, remove for production
-                items={links}
-            />
+            <ClerkProvider>
+                <FloatingDock
+                    mobileClassName="translate-y-20" // only for demo, remove for production
+                    items={[
+                        ...links,
+                        {
+                            title: "Signin",
+                            icon: (
+                                <SignedOut>
+                                    <SignInButton>
+                                        <button className="relative border border-neutral-200 dark:border-white/[0.2] text-black dark:text-white px-4 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-purple-500 hover:bg-gradient-to-l">
+                                            Sign In
+                                        </button>
+                                    </SignInButton>
+                                </SignedOut>
+                            ),
+                            href: "#", // You can link to the sign-in page, if necessary
+                        },
+                    ]}
+                />
+            </ClerkProvider>
         </div>
     );
 }
