@@ -10,10 +10,12 @@ export default function Chat({
   placeholders,
   onChange,
   onSubmit,
+  setResult
 }: {
   placeholders: string[]
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
+  setResult: (setResult: Function) => void
 }) {
   const [response, setResponse] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
@@ -189,6 +191,10 @@ export default function Chat({
         if (done) break
 
         setResponse(prev => prev + value)
+        // addMsg(value)
+        setResult((prev: string)=>prev+value);
+        console.log(value);
+        
       }
 
       formRef.current?.reset()

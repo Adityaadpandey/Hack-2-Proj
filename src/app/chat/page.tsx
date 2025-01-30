@@ -2,8 +2,21 @@
 
 import Chatbox from "@/components/ui/Chat"
 import Spline from "@splinetool/react-spline"
+import { useEffect, useState } from "react"
+import { marked } from "marked"
+import { ChatInterface } from "@/components/ui/ChatInterface"
+import { cn } from "@/lib/utils"
 
 export default function ChatInput() {
+  const [result, setResult] = useState<any>("")
+  
+  interface ConvoItem {
+    sender: string;
+    text: string;
+  }
+  
+  const [convo, setConvo] = useState<ConvoItem[]>([])
+  
   const placeholders = [
     "What are the symptoms of the flu?",
     "How can I lower my blood pressure naturally?",
@@ -12,56 +25,58 @@ export default function ChatInput() {
     "What are common signs of vitamin D deficiency?",
   ]
 
+  useEffect(() => {
+    async function setParsed() {
+      const resultElement = document.getElementById("result");
+      if (resultElement && result) {
+        const parsedMarkdown = await marked.parse(result);
+        resultElement.innerHTML = parsedMarkdown;
+        setConvo(prev => [...prev, { sender: "ai", text: result }]);
+      }
+    }
+    
+    setParsed();
+  }, [result]);
+
+  const handleUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+    const userMessage = formData.get('prompt') as string;
+    if (userMessage) {
+      setConvo(prev => [...prev, { sender: "user", text: userMessage }]);
+    }
+  }
+
   return (
     <div className="bg-black h-screen w-screen relative">
-      <div className="-translate-y-[25%] fixed w-full">
+      <div className="-translate-y-[20%] fixed w-full">
         <Spline scene="https://prod.spline.design/gybooEl40G1Df9Ib/scene.splinecode" />
       </div>
-      <div className="h-[40rem] flex flex-col items-center px-4 absolute bottom-0 w-full sm:justify-center">
-        <h2 className="mb-10 sm:mb-20 text-xl text-center sm:text-5xl text-white">Ask Pulse AI</h2>
-        <Chatbox placeholders={placeholders} onChange={() => { }} onSubmit={() => { }} />
+      
+      <div className="fixed top-10 p-4  flex item-center h-min w-full justify-center backdrop-blur-sm max-h-[50%] overflow-auto z-10">
+        <div className="w-[50%] h-max" id="result">
+          {convo.map((item, index) => (
+            <div key={index} className="flex flex-col">
+              <div className={cn(
+                "max-w-[80%] p-4 rounded-2xl animate-float",
+                item.sender === "user"
+                  ? "ml-auto bg-primary text-primary-foreground rounded-br-none"
+                  : "bg-muted rounded-bl-none"
+              )}>
+                {item.text}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* <div className="space-y-4 w-full">
-        <form
-          ref={formRef}
-          action={handleSubmit}
-          className="space-y-4"
-        >
-          <textarea
-            name="prompt"
-            className="w-full p-4 border rounded-lg resize-none"
-            placeholder="Ask your question..."
-            rows={4}
-          />
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 py-2 px-4 bg-blue-500 text-white rounded-lg disabled:opacity-50"
-            >
-              {isLoading ? "Generating..." : "Send Message"}
-            </button>
-            <button
-              type="button"
-              onClick={handleClearHistory}
-              className="py-2 px-4 bg-gray-500 text-white rounded-lg"
-            >
-              Clear History
-            </button>
-          </div>
-        </form>
-
-        {response && (
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="whitespace-pre-wrap">{response}</p>
-          </div>
-        )}
-      </div> */}
-
-
-
+      <div className="h-[40rem] flex flex-col items-center px-4 absolute bottom-0 w-full sm:justify-center">
+        <Chatbox 
+          placeholders={placeholders} 
+          onChange={() => {}} 
+          onSubmit={handleUserSubmit}
+          setResult={setResult} 
+        />
+      </div>
     </div>
-
   )
 }
