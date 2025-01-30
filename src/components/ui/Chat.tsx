@@ -5,7 +5,6 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 import { generateChatResponse } from "@/prompts"
 
-
 export default function Chat({
   placeholders,
   onChange,
@@ -15,36 +14,32 @@ export default function Chat({
   placeholders: string[]
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
-  setResult: (setResult: Function) => void
+  setResult: (setResult: string | ((prev: string) => string)) => void
 }) {
-  const [response, setResponse] = useState<string>("")
   const [isLoading, setIsLoading] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
-
-  async function handleClearHistory() {
-    // await clearChatHistory()
-    setResponse("")
-  }
-
-
-
-
-
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0)
-
-
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  
+  // Animation related state and refs
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const newDataRef = useRef<any[]>([])
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [value, setValue] = useState("")
+  const [animating, setAnimating] = useState(false)
+
   const startAnimation = () => {
     intervalRef.current = setInterval(() => {
       setCurrentPlaceholder((prev) => (prev + 1) % placeholders.length)
     }, 3000)
   }
+
   const handleVisibilityChange = () => {
     if (document.visibilityState !== "visible" && intervalRef.current) {
-      clearInterval(intervalRef.current) // Clear the interval when the tab is not visible
+      clearInterval(intervalRef.current)
       intervalRef.current = null
     } else if (document.visibilityState === "visible") {
-      startAnimation() // Restart the interval when the tab becomes visible
+      startAnimation()
     }
   }
 
@@ -59,12 +54,6 @@ export default function Chat({
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
   }, [placeholders])
-
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const newDataRef = useRef<any[]>([])
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [value, setValue] = useState("")
-  const [animating, setAnimating] = useState(false)
 
   const draw = useCallback(() => {
     if (!inputRef.current) return
@@ -177,75 +166,91 @@ export default function Chat({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!value.trim()) return
+
+    const userMessage = value.trim()
+
+    // Trigger animation
     vanishAndSubmit()
+    
+    // Add the user message to the result
+    setResult(prev => {
+      console.log(prev, userMessage);
+      
+      const userMessageFormatted = `${prev ? '\n\n' : ''}User: ${userMessage}`
+      return prev + userMessageFormatted
+    })
+    
     setIsLoading(true)
-    setResponse("")
     const formData: FormData = new FormData(formRef.current!)
 
     try {
+      // Add the Assistant prefix
+      setResult(prev => prev + '\n\nAssistant: ')
+      
       const stream = await generateChatResponse(formData)
       const reader = stream.getReader()
+      let responseText = ''
 
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
 
-        setResponse(prev => prev + value)
-        // addMsg(value)
-        setResult((prev: string)=>prev+value);
-        console.log(value);
-        
+        responseText += value
+        setResult(prev => prev + value)
       }
 
       formRef.current?.reset()
     } catch (error) {
       console.error('Error:', error)
-      setResponse("An error occurred. Please try again.")
+      setResult(prev => prev + "An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
   }
+
   return (
-    <>
-
-      <form
-        ref={formRef}
+    <form
+      ref={formRef}
+      className={cn(
+        "w-full relative max-w-xl mx-auto h-12 rounded-full overflow-hidden shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),_0px_1px_0px_0px_rgba(25,28,33,0.02),_0px_0px_0px_1px_rgba(25,28,33,0.08)] transition duration-200",
+        value && "bg-gray-800",
+      )}
+      onSubmit={handleSubmit}
+    >
+      <canvas
         className={cn(
-          "w-full relative max-w-xl mx-auto h-12 rounded-full overflow-hidden shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),_0px_1px_0px_0px_rgba(25,28,33,0.02),_0px_0px_0px_1px_rgba(25,28,33,0.08)] transition duration-200",
-          value && "bg-gray-800",
+          "absolute pointer-events-none text-base transform scale-50 top-[20%] left-2 sm:left-8 origin-top-left filter invert dark:invert-0 pr-20",
+          !animating ? "opacity-0" : "opacity-100",
         )}
-        onSubmit={(e) => handleSubmit(e)}
-      >
-        <canvas
-          className={cn(
-            "absolute pointer-events-none  text-base transform scale-50 top-[20%] left-2 sm:left-8 origin-top-left filter invert dark:invert-0 pr-20",
-            !animating ? "opacity-0" : "opacity-100",
-          )}
-          ref={canvasRef}
-        />
-        <input
-          name="prompt"
-          onChange={(e) => {
-            if (!animating) {
-              setValue(e.target.value)
-              onChange && onChange(e)
-            }
-          }}
-          onKeyDown={handleKeyDown}
-          ref={inputRef}
-          value={value}
-          type="text"
-          className={cn(
-            "w-full relative text-sm sm:text-base z-50 border-none text-white bg-transparent h-full rounded-full focus:outline-none focus:ring-0 pl-4 sm:pl-10 pr-20",
-            animating && "text-transparent",
-          )}
-        />
+        ref={canvasRef}
+      />
+      <input
+        name="prompt"
+        onChange={(e) => {
+          if (!animating) {
+            setValue(e.target.value)
+            onChange && onChange(e)
+          }
+        }}
+        onKeyDown={handleKeyDown}
+        ref={inputRef}
+        value={value}
+        type="text"
+        className={cn(
+          "w-full relative text-sm sm:text-base z-50 border-none text-white bg-transparent h-full rounded-full focus:outline-none focus:ring-0 pl-4 sm:pl-10 pr-20",
+          animating && "text-transparent",
+        )}
+      />
 
-        <button
-          disabled={!value}
-          type="submit"
-          className="absolute right-2 top-1/2 z-50 -translate-y-1/2 h-8 w-8 rounded-full disabled:bg-gray-800 bg-blue-500 transition duration-200 flex items-center justify-center"
-        >
+      <button
+        disabled={!value || isLoading}
+        type="submit"
+        className="absolute right-2 top-1/2 z-50 -translate-y-1/2 h-8 w-8 rounded-full disabled:bg-gray-800 bg-blue-500 transition duration-200 flex items-center justify-center"
+      >
+        {isLoading ? (
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        ) : (
           <motion.svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -276,38 +281,37 @@ export default function Chat({
             <path d="M13 18l6 -6" />
             <path d="M13 6l6 6" />
           </motion.svg>
-        </button>
+        )}
+      </button>
 
-        <div className="absolute inset-0 flex items-center rounded-full pointer-events-none">
-          <AnimatePresence mode="wait">
-            {!value && (
-              <motion.p
-                initial={{
-                  y: 5,
-                  opacity: 0,
-                }}
-                key={`current-placeholder-${currentPlaceholder}`}
-                animate={{
-                  y: 0,
-                  opacity: 1,
-                }}
-                exit={{
-                  y: -15,
-                  opacity: 0,
-                }}
-                transition={{
-                  duration: 0.3,
-                  ease: "linear",
-                }}
-                className="text-gray-400 text-sm sm:text-base font-normal pl-4 sm:pl-12 text-left w-[calc(100%-2rem)] truncate"
-              >
-                {placeholders[currentPlaceholder]}
-              </motion.p>
-            )}
-          </AnimatePresence>
-        </div>
-      </form>
-    </>
+      <div className="absolute inset-0 flex items-center rounded-full pointer-events-none">
+        <AnimatePresence mode="wait">
+          {!value && (
+            <motion.p
+              initial={{
+                y: 5,
+                opacity: 0,
+              }}
+              key={`current-placeholder-${currentPlaceholder}`}
+              animate={{
+                y: 0,
+                opacity: 1,
+              }}
+              exit={{
+                y: -15,
+                opacity: 0,
+              }}
+              transition={{
+                duration: 0.3,
+                ease: "linear",
+              }}
+              className="text-gray-400 text-sm sm:text-base font-normal pl-4 sm:pl-12 text-left w-[calc(100%-2rem)] truncate"
+            >
+              {placeholders[currentPlaceholder]}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      </div>
+    </form>
   )
 }
-

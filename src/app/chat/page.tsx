@@ -2,21 +2,14 @@
 
 import Chatbox from "@/components/ui/Chat"
 import Spline from "@splinetool/react-spline"
-import { useEffect, useState } from "react"
-import { marked } from "marked"
-import { ChatInterface } from "@/components/ui/ChatInterface"
+import { useEffect, useRef, useState } from "react"
 import { cn } from "@/lib/utils"
 
 export default function ChatInput() {
-  const [result, setResult] = useState<any>("")
-  
-  interface ConvoItem {
-    sender: string;
-    text: string;
-  }
-  
-  const [convo, setConvo] = useState<ConvoItem[]>([])
-  
+  const [result, setResult] = useState<string>("")
+  const [convo, setConvo] = useState<{sender: string; text: string}[]>([])
+  const chatContainerRef = useRef<HTMLDivElement>(null)
+
   const placeholders = [
     "What are the symptoms of the flu?",
     "How can I lower my blood pressure naturally?",
@@ -25,39 +18,61 @@ export default function ChatInput() {
     "What are common signs of vitamin D deficiency?",
   ]
 
+  // Update the conversation when result changes
   useEffect(() => {
-    async function setParsed() {
-      const resultElement = document.getElementById("result");
-      if (resultElement && result) {
-        const parsedMarkdown = await marked.parse(result);
-        resultElement.innerHTML = parsedMarkdown;
-        setConvo(prev => [...prev, { sender: "ai", text: result }]);
-      }
-    }
+    if (!result) return
     
-    setParsed();
-  }, [result]);
+    // Split the result into individual messages
+    const messages = result.split('\n\n').map(msg => msg.trim())
+    
+    const newConvo: {sender: string; text: string}[] = []
+    
+    messages.forEach(msg => {
+      if (msg.startsWith('User: ')) {
+        newConvo.push({
+          sender: 'user',
+          text: msg.replace('User: ', '').trim()
+        })
+      } else if (msg.startsWith('Assistant: ')) {
+        newConvo.push({
+          sender: 'ai',
+          text: msg.replace('Assistant: ', '').trim()
+        })
+      }
+    })
+    
+    setConvo(newConvo)
 
-  const handleUserSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    const formData = new FormData(e.currentTarget);
-    const userMessage = formData.get('prompt') as string;
-    if (userMessage) {
-      setConvo(prev => [...prev, { sender: "user", text: userMessage }]);
-    }
-  }
+    // Scroll to bottom when new messages arrive
+    setTimeout(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+      }
+    }, 100)
+  }, [result])
 
   return (
-    <div className="bg-black h-screen w-screen relative">
-      <div className="-translate-y-[20%] fixed w-full">
+    <div className="bg-black h-screen w-screen relative flex flex-col">
+      {/* Spline background */}
+      <div className="fixed inset-0 pointer-events-none">
         <Spline scene="https://prod.spline.design/gybooEl40G1Df9Ib/scene.splinecode" />
       </div>
       
-      <div className="fixed top-10 p-4  flex item-center h-min w-full justify-center backdrop-blur-sm max-h-[50%] overflow-auto z-10">
-        <div className="w-[50%] h-max" id="result">
+      {/* Chat container */}
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto px-4 pt-8 pb-32 flex flex-col items-center z-10"
+      >
+        <div className="w-full max-w-2xl space-y-4">
+          {convo.length === 0 && (
+            <div className="text-gray-500 text-center pt-8">
+              Start a conversation by typing a message below
+            </div>
+          )}
           {convo.map((item, index) => (
-            <div key={index} className="flex flex-col">
+            <div key={index} className="flex flex-col animate-fade-in">
               <div className={cn(
-                "max-w-[80%] p-4 rounded-2xl animate-float",
+                "max-w-[80%] p-4 rounded-2xl",
                 item.sender === "user"
                   ? "ml-auto bg-primary text-primary-foreground rounded-br-none"
                   : "bg-muted rounded-bl-none"
@@ -69,13 +84,22 @@ export default function ChatInput() {
         </div>
       </div>
 
-      <div className="h-[40rem] flex flex-col items-center px-4 absolute bottom-0 w-full sm:justify-center">
-        <Chatbox 
-          placeholders={placeholders} 
-          onChange={() => {}} 
-          onSubmit={handleUserSubmit}
-          setResult={setResult} 
-        />
+      {/* Input box */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent z-[999]">
+        <div className="max-w-2xl mx-auto">
+          <Chatbox 
+            placeholders={placeholders} 
+            onChange={() => {}} 
+            onSubmit={() => {}}
+            setResult={(updater: any) => {
+              if (typeof updater === 'function') {
+                setResult(prev => updater(prev))
+              } else {
+                setResult(updater)
+              }
+            }} 
+          />
+        </div>
       </div>
     </div>
   )
