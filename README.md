@@ -135,6 +135,17 @@ Visit `http://localhost:3000` to see the chatbot in action! 🚀
 ├── components.json
 ├── eslint.config.mjs
 ```
+## 📸 Visuals
+
+### Landing Page
+![Landing Page Screenshot](https://github.com/anshkumar2311/Hack-2-Proj/blob/main/public/1.png)
+
+### Chatbot Interaction
+![Chatbot Screenshot](https://github.com/anshkumar2311/Hack-2-Proj/blob/main/public/2.png)
+
+### Wound Image Analysis
+![Wound Image Data Screenshot](https://github.com/anshkumar2311/Hack-2-Proj/blob/main/public/3.png)
+
 ## 🛡️ Security & Privacy
 - Data encryption is used to secure user interactions.
 - OAuth & JWT authentication ensures safe user logins.
