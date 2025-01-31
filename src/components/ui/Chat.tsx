@@ -1,91 +1,102 @@
-"use client"
+"use client";
 
-import { AnimatePresence, motion } from "framer-motion"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { cn } from "@/lib/utils"
-import { generateChatResponse } from "@/prompts"
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
+import { generateChatResponse } from "@/prompts";
 
 export default function Chat({
   placeholders,
   onChange,
   onSubmit,
-  setResult
+  setResult,
 }: {
-  placeholders: string[]
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void
-  setResult: (setResult: string | ((prev: string) => string)) => void
+  placeholders: string[];
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  setResult: (setResult: string | ((prev: string) => string)) => void;
 }) {
-  const [isLoading, setIsLoading] = useState(false)
-  const formRef = useRef<HTMLFormElement>(null)
-  const [currentPlaceholder, setCurrentPlaceholder] = useState(0)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
-  
+  const [isLoading, setIsLoading] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Animation related state and refs
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const newDataRef = useRef<any[]>([])
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [value, setValue] = useState("")
-  const [animating, setAnimating] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const newDataRef = useRef<any[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [value, setValue] = useState("");
+  const [animating, setAnimating] = useState(false);
 
   const startAnimation = () => {
     intervalRef.current = setInterval(() => {
-      setCurrentPlaceholder((prev) => (prev + 1) % placeholders.length)
-    }, 3000)
-  }
+      setCurrentPlaceholder((prev) => (prev + 1) % placeholders.length);
+    }, 3000);
+  };
 
   const handleVisibilityChange = () => {
     if (document.visibilityState !== "visible" && intervalRef.current) {
-      clearInterval(intervalRef.current)
-      intervalRef.current = null
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     } else if (document.visibilityState === "visible") {
-      startAnimation()
+      startAnimation();
     }
-  }
+  };
 
   useEffect(() => {
-    startAnimation()
-    document.addEventListener("visibilitychange", handleVisibilityChange)
+    startAnimation();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current);
       }
-      document.removeEventListener("visibilitychange", handleVisibilityChange)
-    }
-  }, [placeholders])
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [placeholders]);
 
   const draw = useCallback(() => {
-    if (!inputRef.current) return
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext("2d")
-    if (!ctx) return
+    if (!inputRef.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-    canvas.width = 800
-    canvas.height = 800
-    ctx.clearRect(0, 0, 800, 800)
-    const computedStyles = getComputedStyle(inputRef.current)
+    canvas.width = 800;
+    canvas.height = 800;
+    ctx.clearRect(0, 0, 800, 800);
+    const computedStyles = getComputedStyle(inputRef.current);
 
-    const fontSize = Number.parseFloat(computedStyles.getPropertyValue("font-size"))
-    ctx.font = `${fontSize * 2}px ${computedStyles.fontFamily}`
-    ctx.fillStyle = "#FFF"
-    ctx.fillText(value, 16, 40)
+    const fontSize = Number.parseFloat(
+      computedStyles.getPropertyValue("font-size"),
+    );
+    ctx.font = `${fontSize * 2}px ${computedStyles.fontFamily}`;
+    ctx.fillStyle = "#FFF";
+    ctx.fillText(value, 16, 40);
 
-    const imageData = ctx.getImageData(0, 0, 800, 800)
-    const pixelData = imageData.data
-    const newData: any[] = []
+    const imageData = ctx.getImageData(0, 0, 800, 800);
+    const pixelData = imageData.data;
+    const newData: any[] = [];
 
     for (let t = 0; t < 800; t++) {
-      const i = 4 * t * 800
+      const i = 4 * t * 800;
       for (let n = 0; n < 800; n++) {
-        const e = i + 4 * n
-        if (pixelData[e] !== 0 && pixelData[e + 1] !== 0 && pixelData[e + 2] !== 0) {
+        const e = i + 4 * n;
+        if (
+          pixelData[e] !== 0 &&
+          pixelData[e + 1] !== 0 &&
+          pixelData[e + 2] !== 0
+        ) {
           newData.push({
             x: n,
             y: t,
-            color: [pixelData[e], pixelData[e + 1], pixelData[e + 2], pixelData[e + 3]],
-          })
+            color: [
+              pixelData[e],
+              pixelData[e + 1],
+              pixelData[e + 2],
+              pixelData[e + 3],
+            ],
+          });
         }
       }
     }
@@ -95,119 +106,122 @@ export default function Chat({
       y,
       r: 1,
       color: `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3]})`,
-    }))
-  }, [value])
+    }));
+  }, [value]);
 
   useEffect(() => {
-    draw()
-  }, [value, draw])
+    draw();
+  }, [value, draw]);
 
   const animate = (start: number) => {
     const animateFrame = (pos = 0) => {
       requestAnimationFrame(() => {
-        const newArr = []
+        const newArr = [];
         for (let i = 0; i < newDataRef.current.length; i++) {
-          const current = newDataRef.current[i]
+          const current = newDataRef.current[i];
           if (current.x < pos) {
-            newArr.push(current)
+            newArr.push(current);
           } else {
             if (current.r <= 0) {
-              current.r = 0
-              continue
+              current.r = 0;
+              continue;
             }
-            current.x += Math.random() > 0.5 ? 1 : -1
-            current.y += Math.random() > 0.5 ? 1 : -1
-            current.r -= 0.05 * Math.random()
-            newArr.push(current)
+            current.x += Math.random() > 0.5 ? 1 : -1;
+            current.y += Math.random() > 0.5 ? 1 : -1;
+            current.r -= 0.05 * Math.random();
+            newArr.push(current);
           }
         }
-        newDataRef.current = newArr
-        const ctx = canvasRef.current?.getContext("2d")
+        newDataRef.current = newArr;
+        const ctx = canvasRef.current?.getContext("2d");
         if (ctx) {
-          ctx.clearRect(pos, 0, 800, 800)
+          ctx.clearRect(pos, 0, 800, 800);
           newDataRef.current.forEach((t) => {
-            const { x: n, y: i, r: s, color } = t
+            const { x: n, y: i, r: s, color } = t;
             if (n > pos) {
-              ctx.beginPath()
-              ctx.rect(n, i, s, s)
-              ctx.fillStyle = color
-              ctx.strokeStyle = color
-              ctx.stroke()
+              ctx.beginPath();
+              ctx.rect(n, i, s, s);
+              ctx.fillStyle = color;
+              ctx.strokeStyle = color;
+              ctx.stroke();
             }
-          })
+          });
         }
         if (newDataRef.current.length > 0) {
-          animateFrame(pos - 8)
+          animateFrame(pos - 8);
         } else {
-          setValue("")
-          setAnimating(false)
+          setValue("");
+          setAnimating(false);
         }
-      })
-    }
-    animateFrame(start)
-  }
+      });
+    };
+    animateFrame(start);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && !animating) {
-      vanishAndSubmit()
+      vanishAndSubmit();
     }
-  }
+  };
 
   const vanishAndSubmit = () => {
-    setAnimating(true)
-    draw()
+    setAnimating(true);
+    draw();
 
-    const value = inputRef.current?.value || ""
+    const value = inputRef.current?.value || "";
     if (value && inputRef.current) {
-      const maxX = newDataRef.current.reduce((prev, current) => (current.x > prev ? current.x : prev), 0)
-      animate(maxX)
+      const maxX = newDataRef.current.reduce(
+        (prev, current) => (current.x > prev ? current.x : prev),
+        0,
+      );
+      animate(maxX);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!value.trim()) return
+    e.preventDefault();
+    if (!value.trim()) return;
 
-    const userMessage = value.trim()
+    const userMessage = value.trim();
 
     // Trigger animation
-    vanishAndSubmit()
-    
+    vanishAndSubmit();
+
     // Add the user message to the result
-    setResult(prev => {
+    setResult((prev) => {
       console.log(prev, userMessage);
-      
-      const userMessageFormatted = `${prev ? '\n\n' : ''}User: ${userMessage}`
-      return prev + userMessageFormatted
-    })
-    
-    setIsLoading(true)
-    const formData: FormData = new FormData(formRef.current!)
+
+      const userMessageFormatted = `${prev ? "\n\n" : ""}User: ${userMessage}`;
+      return prev + userMessageFormatted;
+    });
+
+    setIsLoading(true);
+    const formData: FormData = new FormData(formRef.current!);
 
     try {
       // Add the Assistant prefix
-      setResult(prev => prev + '\n\nAssistant: ')
-      
-      const stream = await generateChatResponse(formData)
-      const reader = stream.getReader()
-      let responseText = ''
+      setResult((prev) => prev + "\n\nAssistant: ");
+
+      const stream = await generateChatResponse(formData);
+      const reader = stream.getReader();
+      let responseText = "";
 
       while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
+        const { done, value } = await reader.read();
+        if (done) break;
 
-        responseText += value
-        setResult(prev => prev + value)
+        responseText += value;
+        setResult((prev) => prev + value);
       }
 
-      formRef.current?.reset()
+      formRef.current?.reset();
     } catch (error) {
-      console.error('Error:', error)
-      setResult(prev => prev + "An error occurred. Please try again.")
+      console.error("Error:", error);
+      setResult((prev) => prev + "An error occurred. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <form
@@ -229,8 +243,8 @@ export default function Chat({
         name="prompt"
         onChange={(e) => {
           if (!animating) {
-            setValue(e.target.value)
-            onChange && onChange(e)
+            setValue(e.target.value);
+            onChange && onChange(e);
           }
         }}
         onKeyDown={handleKeyDown}
@@ -313,5 +327,5 @@ export default function Chat({
         </AnimatePresence>
       </div>
     </form>
-  )
+  );
 }

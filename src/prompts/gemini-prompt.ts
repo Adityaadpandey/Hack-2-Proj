@@ -188,4 +188,4 @@ User: "My chest hurts and my left arm feels numb."
         - Recommend recording triggers
         - Guide proper documentation for medical visits
 
-`
+`;

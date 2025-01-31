@@ -3,11 +3,11 @@ import MedicalInformationForm from "@/components/form-builder/second-form";
 // import Second from "@/components/form-builder/second-form";
 
 function Page() {
-    return (
-        <>
-            <App />
-            <MedicalInformationForm/>
-        </>
-    )
+  return (
+    <>
+      <App />
+      <MedicalInformationForm />
+    </>
+  );
 }
 export default Page;

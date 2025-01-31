@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   images: {
-    domains: ['assets.aceternity.com'], // Add the domain here
+    domains: ["assets.aceternity.com"], // Add the domain here
   },
 };
 

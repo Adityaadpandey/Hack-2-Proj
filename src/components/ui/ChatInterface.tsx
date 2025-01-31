@@ -16,17 +16,23 @@ export const ChatInterface = () => {
 
   const handleSend = () => {
     if (!input.trim()) return;
-    
-    setMessages(prev => [...prev, { id: Date.now(), text: input, sender: "user" }]);
+
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now(), text: input, sender: "user" },
+    ]);
     setInput("");
-    
+
     // Simulate AI response
     setTimeout(() => {
-      setMessages(prev => [...prev, { 
-        id: Date.now(), 
-        text: "I understand your concern. Let me help you with that.", 
-        sender: "ai" 
-      }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          text: "I understand your concern. Let me help you with that.",
+          sender: "ai",
+        },
+      ]);
     }, 1000);
   };
 
@@ -38,16 +44,16 @@ export const ChatInterface = () => {
             key={message.id}
             className={cn(
               "max-w-[80%] p-4 rounded-2xl animate-float",
-              message.sender === "user" 
+              message.sender === "user"
                 ? "ml-auto bg-primary text-primary-foreground rounded-br-none"
-                : "bg-muted rounded-bl-none"
+                : "bg-muted rounded-bl-none",
             )}
           >
             {message.text}
           </div>
         ))}
       </div>
-      
+
       <div className="p-4 glass border-t border-white/10">
         <div className="flex items-center gap-2">
           <button className="p-2 rounded-full hover:bg-white/10 transition-colors">
