@@ -52,7 +52,7 @@ const WoundAnalyzer = () => {
                             },
                             {
                                 inlineData: {
-                                    mimeType: file.type, // Use correct MIME type dynamically
+                                    mimeType: file.type,
                                     data: base64String,
                                 },
                             },
@@ -68,9 +68,9 @@ const WoundAnalyzer = () => {
 
             // Remove unwanted Markdown symbols
             const cleanedText = rawText
-                .replace(/\*\*/g, "") // Remove bold (**)
-                .replace(/-/g, "") // Remove list bullets (-)
-                .replace(/_/g, ""); // Remove italic (_)
+                .replace(/\*\*/g, "")
+                .replace(/-/g, "")
+                .replace(/_/g, "");
 
             setAnalysis(cleanedText);
         } catch (err: any) {
@@ -95,10 +95,10 @@ const WoundAnalyzer = () => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-4">
-            <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className=" mx-auto p-4 bg-gray-900 min-h-screen">
+            <div className=" max-w-6xl mx-auto rounded-lg shadow-lg p-6 bg-gray-800 text-gray-100">
                 {/* Medical Disclaimer */}
-                <div className="mb-6 p-4 bg-yellow-50 text-yellow-800 rounded-lg text-sm">
+                <div className="mb-6 p-4 bg-yellow-900/30 text-yellow-200 rounded-lg text-sm">
                     <p className="font-bold">⚕️ Medical Disclaimer</p>
                     <p>This is an AI-powered analysis tool for educational purposes only.
                         Always consult a healthcare professional for medical advice.</p>
@@ -106,10 +106,10 @@ const WoundAnalyzer = () => {
 
                 {/* Upload Section */}
                 <div className="mb-6">
-                    <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                    <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-gray-600 rounded-lg cursor-pointer bg-gray-700 hover:bg-gray-600 transition-colors">
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                             <Camera className="w-12 h-12 mb-4 text-gray-400" />
-                            <p className="text-sm text-gray-500">Upload wound image for analysis</p>
+                            <p className="text-sm text-gray-300">Upload wound image for analysis</p>
                         </div>
                         <input
                             type="file"
@@ -129,7 +129,7 @@ const WoundAnalyzer = () => {
 
                 {/* Loading State */}
                 {analyzing && (
-                    <div className="mb-6 p-4 bg-blue-50 text-blue-700 rounded-lg">
+                    <div className="mb-6 p-4 bg-blue-900/30 text-blue-200 rounded-lg">
                         <p className="font-bold">Analyzing Image...</p>
                         <p>Please wait while our AI analyzes the wound.</p>
                     </div>
@@ -137,7 +137,7 @@ const WoundAnalyzer = () => {
 
                 {/* Error Display */}
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-lg">
+                    <div className="mb-6 p-4 bg-red-900/30 text-red-200 rounded-lg">
                         <p className="font-bold">Error</p>
                         <p>{error}</p>
                     </div>
@@ -145,7 +145,7 @@ const WoundAnalyzer = () => {
 
                 {/* Analysis Results */}
                 {analysis && (
-                    <div className="p-4 bg-blue-50 rounded-lg">
+                    <div className="p-4 bg-blue-900/30 text-blue-200 rounded-lg">
                         <h2 className="text-xl font-bold mb-4">Analysis Results</h2>
                         <p>{analysis}</p>
                     </div>
