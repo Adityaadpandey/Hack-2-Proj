@@ -1,24 +1,27 @@
 import type { Config } from "tailwindcss";
-const defaultTheme = require("tailwindcss/defaultTheme");
-const colors = require("tailwindcss/colors");
-const {
-	default: flattenColorPalette,
-} = require("tailwindcss/lib/util/flattenColorPalette");
+import flattenColorPalette from "tailwindcss/lib/util/flattenColorPalette";
 
-/** @type {import('tailwindcss').Config} */
+function addVariablesForColors({ addBase, theme }: any) {
+	let allColors = flattenColorPalette(theme("colors"));
+	let newVars = Object.fromEntries(
+		Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
+	);
+
+	addBase({
+		":root": newVars,
+	});
+}
+
 export default {
-	darkMode: "class", // Enable dark mode based on the 'class' strategy
+	darkMode: ["class"],
 	content: [
 		"./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
 		"./src/components/**/*.{js,ts,jsx,tsx,mdx}",
 		"./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-		"./src/**/*.{ts,tsx}", // Add extra source directory here if needed
+		"./src/**/*.{ts,tsx}",
 	],
 	theme: {
 		extend: {
-			boxShadow: {
-				input: `0px 2px 3px -1px rgba(0,0,0,0.1), 0px 1px 0px 0px rgba(25,28,33,0.02), 0px 0px 0px 1px rgba(25,28,33,0.08)`,
-			},
 			colors: {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
@@ -65,23 +68,24 @@ export default {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
-			}
-		},
+			},
+			animation: {
+				aurora: "aurora 60s linear infinite",
+			},
+			keyframes: {
+				aurora: {
+					from: {
+						backgroundPosition: "50% 50%, 50% 50%",
+					},
+					to: {
+						backgroundPosition: "350% 50%, 350% 50%",
+					},
+				},
+			},
+		}
 	},
 	plugins: [
 		require("tailwindcss-animate"),
 		addVariablesForColors
 	],
-};
-
-// Helper function to generate custom color variables
-function addVariablesForColors({ addBase, theme }: any) {
-	let allColors = flattenColorPalette(theme("colors"));
-	let newVars = Object.fromEntries(
-		Object.entries(allColors).map(([key, val]) => [`--${key}`, val])
-	);
-
-	addBase({
-		":root": newVars,
-	});
-}
+} satisfies Config;
