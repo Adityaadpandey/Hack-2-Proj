@@ -15,6 +15,7 @@ import {
   User,
   Weight,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -33,6 +34,7 @@ interface DocumentData {
 }
 
 function App() {
+  const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
     dob: null,
     gender: "",
@@ -77,6 +79,7 @@ function App() {
     console.log("Complete Health Profile Submission:", completeHealthProfile);
     setDialog(true);
     setShowDocumentUpload(false);
+    router.push("/chat")
   };
 
   const handleDocumentReset = () => {
