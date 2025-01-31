@@ -1,8 +1,12 @@
+'use client'
 import Main from "@/components/Main";
 import { FloatingDockDemo } from "@/components/ui/FloatingDockDemo";
 import { ArrowRight, Clock, MessageCircle, Shield } from 'lucide-react';
+import Link from "next/link";
+import Navigate, { useRouter } from 'next/navigation';
 
 export default function Home() {
+  const router = useRouter();
   const features = [
     {
       icon: <Shield className="w-6 h-6 text-blue-400" />,
@@ -57,11 +61,13 @@ export default function Home() {
             <p className="text-gray-400 text-xl mb-8 max-w-xl">
               Get instant health guidance and support, 24/7. Your personal AI health companion is here to help you make informed decisions about your well-being.
             </p>
-
-            <button className="group flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-4 px-8 rounded-lg text-lg w-fit hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300">
+            
+            <Link href={'/chat'}
+              className="group flex items-center gap-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-4 px-8 rounded-lg text-lg w-fit hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300"
+            >
               Start Chatting Now
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+            </Link>
 
             {/* Enhanced feature cards */}
             <div className="mt-16 grid grid-cols-3 gap-6 max-w-2xl">
