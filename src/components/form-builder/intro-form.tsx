@@ -26,10 +26,10 @@ interface FormData {
   weight: string;
 }
 
-interface DocumentUpload {
-  medicalHistory: File | null;
-  labReports: File | null;
-  insuranceCard: File | null;
+interface DocumentData {
+  medicalHistory: string | null;
+  ongoingMedications: string | null;
+  lifestyleInfo: string | null;
 }
 
 function App() {
@@ -39,17 +39,19 @@ function App() {
     height: "",
     weight: "",
   });
-  const [dialog, setDialog] = useState(false);
+
+  const [documents, setDocuments] = useState<DocumentData>({
+    medicalHistory: null,
+    ongoingMedications: null,
+    lifestyleInfo: null,
+  });
 
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
-  const [documents, setDocuments] = useState<DocumentUpload>({
-    medicalHistory: null,
-    labReports: null,
-    insuranceCard: null,
-  });
+  const [dialog, setDialog] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Basic Health Information:", formData);
     setShowDocumentUpload(true);
   };
 
@@ -60,24 +62,30 @@ function App() {
       height: "",
       weight: "",
     });
-  };
-
-  const handleFileChange = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    type: keyof DocumentUpload,
-  ) => {
-    const file = event.target.files?.[0] || null;
-    setDocuments((prev) => ({
-      ...prev,
-      [type]: file,
-    }));
+    console.log("Form data reset");
   };
 
   const handleDocumentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Documents submitted:", documents);
-    // Handle document submission here
+
+    // Combine all data for final submission
+    const completeHealthProfile = {
+      basicInfo: formData,
+      documents: documents
+    };
+
+    console.log("Complete Health Profile Submission:", completeHealthProfile);
+    setDialog(true);
     setShowDocumentUpload(false);
+  };
+
+  const handleDocumentReset = () => {
+    setDocuments({
+      medicalHistory: null,
+      ongoingMedications: null,
+      lifestyleInfo: null,
+    });
+    console.log("Document data reset");
   };
 
   return (
@@ -207,17 +215,10 @@ function App() {
           <DialogHeader>
             <DialogTitle>Upload Health Documents</DialogTitle>
             <DialogDescription>
-              Please upload the following documents to complete your health
-              profile
+              Please upload the following documents to complete your health profile
             </DialogDescription>
           </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              handleDocumentSubmit(e);
-              setDialog(true);
-            }}
-            className="space-y-6 mt-4"
-          >
+          <form onSubmit={handleDocumentSubmit} className="space-y-6 mt-4">
             <div className="space-y-6">
               {/* Medical History */}
               <div>
@@ -237,96 +238,7 @@ function App() {
                     }
                   />
                   <div className="flex gap-2 mt-2 flex-wrap">
-                    {[
-                      "known allergies",
-                      "Diabetic",
-                      "Hypertension",
-                      "Asthma",
-                    ].map((item, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        className="px-2 py-1 text-white rounded-lg border border-zinc-700 bg-transparent hover:bg-zinc-700 transition-colors"
-                        onClick={() =>
-                          setDocuments((prev) => ({
-                            ...prev,
-                            medicalHistory: prev.medicalHistory
-                              ? `${prev.medicalHistory}\n${item}`
-                              : item,
-                          }))
-                        }
-                      >
-                        {item}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="Ongo">
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Ongoing Medications
-                </label>
-                <div className="relative">
-                  <textarea
-                    className="w-full h-32 p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors text-white placeholder-zinc-500"
-                    placeholder="Ongoing Medications"
-                    value={documents.ongoinghistory || ""}
-                    onChange={(e) =>
-                      setDocuments((prev) => ({
-                        ...prev,
-                        ongoinghistory: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Lab Reports */}
-              {/* <div>
-                                <label className="block text-sm font-medium text-zinc-300 mb-2">Lab Reports</label>
-                                <div className="relative">
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex-1">
-                                            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-zinc-700 border-dashed rounded-lg cursor-pointer bg-zinc-800/50 hover:bg-zinc-800 transition-colors">
-                                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                                    <Activity className="w-8 h-8 mb-3 text-zinc-500" />
-                                                    <p className="text-sm text-zinc-400">
-                                                        {documents.labReports ? documents.labReports.name : "Upload lab reports"}
-                                                    </p>
-                                                </div>
-                                                <input
-                                                    type="file"
-                                                    className="hidden"
-                                                    onChange={(e) => handleFileChange(e, 'labReports')}
-                                                    accept=".pdf,.jpg,.png"
-                                                />
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div> */}
-
-              {/* Current Lifestyle */}
-
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">
-                  Lifestyle Information
-                </label>
-                <div className="relative">
-                  <textarea
-                    className="w-full h-32 p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors text-white placeholder-zinc-500"
-                    placeholder="Enter your medical history"
-                    value={documents.lifestyle_info || ""}
-                    onChange={(e) =>
-                      setDocuments((prev) => ({
-                        ...prev,
-                        lifestyle_info: e.target.value,
-                      }))
-                    }
-                  />
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    {["Smoking", "Drinking", "Drugs", "Excercise"].map(
+                    {["Known Allergies", "Diabetic", "Hypertension", "Asthma"].map(
                       (item, index) => (
                         <button
                           key={index}
@@ -335,15 +247,76 @@ function App() {
                           onClick={() =>
                             setDocuments((prev) => ({
                               ...prev,
-                              lifestyle_info: prev.lifestyle_info
-                                ? `${prev.lifestyle_info}\n${item}`
+                              medicalHistory: prev.medicalHistory
+                                ? `${prev.medicalHistory}\n${item}`
                                 : item,
                             }))
                           }
                         >
                           {item}
                         </button>
-                      ),
+                      )
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Ongoing Medications */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  Ongoing Medications
+                </label>
+                <div className="relative">
+                  <textarea
+                    className="w-full h-32 p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors text-white placeholder-zinc-500"
+                    placeholder="Enter ongoing medications"
+                    value={documents.ongoingMedications || ""}
+                    onChange={(e) =>
+                      setDocuments((prev) => ({
+                        ...prev,
+                        ongoingMedications: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Lifestyle Information */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">
+                  Lifestyle Information
+                </label>
+                <div className="relative">
+                  <textarea
+                    className="w-full h-32 p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors text-white placeholder-zinc-500"
+                    placeholder="Enter lifestyle information"
+                    value={documents.lifestyleInfo || ""}
+                    onChange={(e) =>
+                      setDocuments((prev) => ({
+                        ...prev,
+                        lifestyleInfo: e.target.value,
+                      }))
+                    }
+                  />
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {["Smoking", "Drinking", "Drugs", "Exercise"].map(
+                      (item, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className="px-2 py-1 text-white rounded-lg border border-zinc-700 bg-transparent hover:bg-zinc-700 transition-colors"
+                          onClick={() =>
+                            setDocuments((prev) => ({
+                              ...prev,
+                              lifestyleInfo: prev.lifestyleInfo
+                                ? `${prev.lifestyleInfo}\n${item}`
+                                : item,
+                            }))
+                          }
+                        >
+                          {item}
+                        </button>
+                      )
                     )}
                   </div>
                 </div>
@@ -359,7 +332,7 @@ function App() {
                 type="button"
                 variant="secondary"
                 className="flex-1"
-                onClick={showDocumentUpload}
+                onClick={handleDocumentReset}
               >
                 Reset
                 <RotateCcw className="ml-2 h-5 w-5" />
@@ -368,12 +341,13 @@ function App() {
           </form>
         </DialogContent>
       </Dialog>
-      <Dialog open={dialog} onOpenChange={setShowDocumentUpload}>
+
+      <Dialog open={dialog} onOpenChange={setDialog}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Thank You!</DialogTitle>
             <DialogDescription>
-              Your documents have been successfully uploaded.
+              Your health profile has been successfully submitted.
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center mt-4">
