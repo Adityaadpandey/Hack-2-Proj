@@ -15,13 +15,13 @@ const model = genAI.getGenerativeModel({
   systemInstruction: ai_prompt,
 });
 
-// Define types for our chat history
+// Define types for chat history
 interface ChatMessage {
   role: "user" | "model";
   parts: { text: string }[];
 }
 
-// Initialize and manage chat history
+// Initialize chat history
 let chatHistory: ChatMessage[] = [];
 
 export async function generateChatResponse(formData: FormData) {
@@ -33,7 +33,7 @@ export async function generateChatResponse(formData: FormData) {
     parts: [{ text: prompt }],
   });
 
-  // Create a chat session with history
+  // Create chat session with history
   const chat = model.startChat({
     history: chatHistory,
     generationConfig: {
@@ -41,7 +41,7 @@ export async function generateChatResponse(formData: FormData) {
     },
   });
 
-  // Create a new stream
+  // Create stream
   const stream = new ReadableStream({
     async start(controller) {
       try {
@@ -60,10 +60,9 @@ export async function generateChatResponse(formData: FormData) {
           parts: [{ text: responseText }],
         });
 
-        // Trim history if it gets too long (keep last N messages)
+        // Trim history if too long
         const MAX_HISTORY = 10;
         if (chatHistory.length > MAX_HISTORY * 2) {
-          // *2 because each exchange has 2 messages
           chatHistory = chatHistory.slice(-MAX_HISTORY * 2);
         }
 
@@ -82,9 +81,7 @@ export async function generateChatResponse(formData: FormData) {
 export async function processImage(formData: FormData) {
   try {
     const imageFile = formData.get("image") as File;
-    const prompt =
-      (formData.get("prompt") as string) ||
-      "Analyze this medical image and provide professional advice.";
+    const prompt = formData.get("prompt") as string || `Analyze this image and provide professional advice . +${ai_prompt}`;
 
     if (!imageFile) {
       return { success: false, error: "No image provided" };
@@ -102,22 +99,20 @@ export async function processImage(formData: FormData) {
           mimeType: imageFile.type,
         },
       },
-      prompt,
+      {
+        text: prompt,
+      }
     ]);
 
-    const response = await streamToString(result.stream);
-    revalidatePath("/upload");
+    let response = "";
+    for await (const chunk of result.stream) {
+      response += chunk.text();
+    }
+
+    revalidatePath("/chat");
     return { success: true, response };
-  } catch {
+  } catch (error) {
+    console.error("Image processing error:", error);
     return { success: false, error: "Image processing failed" };
   }
-}
-
-// Helper function to convert stream to string
-async function streamToString(stream: AsyncGenerator<any>) {
-  let response = "";
-  for await (const chunk of stream) {
-    response += chunk.text();
-  }
-  return response;
 }

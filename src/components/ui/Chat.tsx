@@ -1,9 +1,10 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { generateChatResponse } from "@/prompts";
+import { generateChatResponse, processImage } from "@/prompts";
+import { AnimatePresence, motion } from "framer-motion";
+import { Camera } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Chat({
   placeholders,
@@ -20,13 +21,10 @@ export default function Chat({
   const formRef = useRef<HTMLFormElement>(null);
   const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Animation related state and refs
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const newDataRef = useRef<any[]>([]);
+  const [image, setImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [value, setValue] = useState("");
-  const [animating, setAnimating] = useState(false);
 
   const startAnimation = () => {
     intervalRef.current = setInterval(() => {
@@ -34,186 +32,70 @@ export default function Chat({
     }, 3000);
   };
 
-  const handleVisibilityChange = () => {
-    if (document.visibilityState !== "visible" && intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    } else if (document.visibilityState === "visible") {
-      startAnimation();
-    }
-  };
-
   useEffect(() => {
     startAnimation();
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [placeholders]);
 
-  const draw = useCallback(() => {
-    if (!inputRef.current) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = 800;
-    canvas.height = 800;
-    ctx.clearRect(0, 0, 800, 800);
-    const computedStyles = getComputedStyle(inputRef.current);
-
-    const fontSize = Number.parseFloat(
-      computedStyles.getPropertyValue("font-size"),
-    );
-    ctx.font = `${fontSize * 2}px ${computedStyles.fontFamily}`;
-    ctx.fillStyle = "#FFF";
-    ctx.fillText(value, 16, 40);
-
-    const imageData = ctx.getImageData(0, 0, 800, 800);
-    const pixelData = imageData.data;
-    const newData: any[] = [];
-
-    for (let t = 0; t < 800; t++) {
-      const i = 4 * t * 800;
-      for (let n = 0; n < 800; n++) {
-        const e = i + 4 * n;
-        if (
-          pixelData[e] !== 0 &&
-          pixelData[e + 1] !== 0 &&
-          pixelData[e + 2] !== 0
-        ) {
-          newData.push({
-            x: n,
-            y: t,
-            color: [
-              pixelData[e],
-              pixelData[e + 1],
-              pixelData[e + 2],
-              pixelData[e + 3],
-            ],
-          });
-        }
-      }
-    }
-
-    newDataRef.current = newData.map(({ x, y, color }) => ({
-      x,
-      y,
-      r: 1,
-      color: `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3]})`,
-    }));
-  }, [value]);
-
-  useEffect(() => {
-    draw();
-  }, [value, draw]);
-
-  const animate = (start: number) => {
-    const animateFrame = (pos = 0) => {
-      requestAnimationFrame(() => {
-        const newArr = [];
-        for (let i = 0; i < newDataRef.current.length; i++) {
-          const current = newDataRef.current[i];
-          if (current.x < pos) {
-            newArr.push(current);
-          } else {
-            if (current.r <= 0) {
-              current.r = 0;
-              continue;
-            }
-            current.x += Math.random() > 0.5 ? 1 : -1;
-            current.y += Math.random() > 0.5 ? 1 : -1;
-            current.r -= 0.05 * Math.random();
-            newArr.push(current);
-          }
-        }
-        newDataRef.current = newArr;
-        const ctx = canvasRef.current?.getContext("2d");
-        if (ctx) {
-          ctx.clearRect(pos, 0, 800, 800);
-          newDataRef.current.forEach((t) => {
-            const { x: n, y: i, r: s, color } = t;
-            if (n > pos) {
-              ctx.beginPath();
-              ctx.rect(n, i, s, s);
-              ctx.fillStyle = color;
-              ctx.strokeStyle = color;
-              ctx.stroke();
-            }
-          });
-        }
-        if (newDataRef.current.length > 0) {
-          animateFrame(pos - 8);
-        } else {
-          setValue("");
-          setAnimating(false);
-        }
-      });
-    };
-    animateFrame(start);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && !animating) {
-      vanishAndSubmit();
-    }
-  };
-
-  const vanishAndSubmit = () => {
-    setAnimating(true);
-    draw();
-
-    const value = inputRef.current?.value || "";
-    if (value && inputRef.current) {
-      const maxX = newDataRef.current.reduce(
-        (prev, current) => (current.x > prev ? current.x : prev),
-        0,
-      );
-      animate(maxX);
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!value.trim()) return;
+    if (!value.trim() && !image) return;
 
     const userMessage = value.trim();
-
-    // Trigger animation
-    vanishAndSubmit();
-
-    // Add the user message to the result
-    setResult((prev) => {
-      console.log(prev, userMessage);
-
-      const userMessageFormatted = `${prev ? "\n\n" : ""}User: ${userMessage}`;
-      return prev + userMessageFormatted;
-    });
-
     setIsLoading(true);
-    const formData: FormData = new FormData(formRef.current!);
 
     try {
-      // Add the Assistant prefix
+      // Add user message to result
+      setResult((prev) =>
+        `${prev ? "\n\n" : ""}User: ${userMessage}${image ? " [Attached Image]" : ""}`
+      );
+
+      // Add Assistant prefix
       setResult((prev) => prev + "\n\nAssistant: ");
 
-      const stream = await generateChatResponse(formData);
-      const reader = stream.getReader();
-      let responseText = "";
+      const formData = new FormData(formRef.current!);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      if (image) {
+        // Convert base64 image back to file
+        const response = await fetch(image);
+        const blob = await response.blob();
+        formData.append("image", blob, "image.jpg");
 
-        responseText += value;
-        setResult((prev) => prev + value);
+        // Process image with text
+        const imageResult = await processImage(formData);
+        if (imageResult.success) {
+          setResult((prev) => prev + imageResult.response);
+        } else {
+          throw new Error(imageResult.error);
+        }
+      } else {
+        // Handle text-only response
+        const stream = await generateChatResponse(formData);
+        const reader = stream.getReader();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          setResult((prev) => prev + value);
+        }
       }
 
+      // Clear input and image after successful submission
+      setValue("");
+      setImage(null);
       formRef.current?.reset();
     } catch (error) {
       console.error("Error:", error);
@@ -228,97 +110,104 @@ export default function Chat({
       ref={formRef}
       className={cn(
         "w-full relative max-w-xl mx-auto h-12 rounded-full overflow-hidden shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),_0px_1px_0px_0px_rgba(25,28,33,0.02),_0px_0px_0px_1px_rgba(25,28,33,0.08)] transition duration-200",
-        value && "bg-gray-800",
+        value && "bg-gray-800"
       )}
       onSubmit={handleSubmit}
     >
-      <canvas
-        className={cn(
-          "absolute pointer-events-none text-base transform scale-50 top-[20%] left-2 sm:left-8 origin-top-left filter invert dark:invert-0 pr-20",
-          !animating ? "opacity-0" : "opacity-100",
-        )}
-        ref={canvasRef}
-      />
-      <input
-        name="prompt"
-        onChange={(e) => {
-          if (!animating) {
+      <div className="relative flex items-center w-full h-full">
+        <input
+          name="prompt"
+          onChange={(e) => {
             setValue(e.target.value);
             onChange && onChange(e);
-          }
-        }}
-        onKeyDown={handleKeyDown}
-        ref={inputRef}
-        value={value}
-        type="text"
-        className={cn(
-          "w-full relative text-sm sm:text-base z-50 border-none text-white bg-transparent h-full rounded-full focus:outline-none focus:ring-0 pl-4 sm:pl-10 pr-20",
-          animating && "text-transparent",
-        )}
+          }}
+          ref={inputRef}
+          value={value}
+          type="text"
+          className="w-full relative text-sm sm:text-base z-50 border-none text-white bg-transparent h-full rounded-full focus:outline-none focus:ring-0 pl-4 sm:pl-10 pr-20"
+        />
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="absolute right-12 top-1/2 z-50 -translate-y-1/2 h-8 w-8 rounded-full hover:bg-gray-700 transition duration-200 flex items-center justify-center"
+        >
+          <Camera className="h-4 w-4 text-gray-400" />
+        </button>
+
+        <button
+          disabled={(!value.trim() && !image) || isLoading}
+          type="submit"
+          className="absolute right-2 top-1/2 z-50 -translate-y-1/2 h-8 w-8 rounded-full disabled:bg-gray-800 bg-blue-500 transition duration-200 flex items-center justify-center"
+        >
+          {isLoading ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-white h-4 w-4"
+            >
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          )}
+        </button>
+      </div>
+
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handleImageUpload}
+        className="hidden"
       />
 
-      <button
-        disabled={!value || isLoading}
-        type="submit"
-        className="absolute right-2 top-1/2 z-50 -translate-y-1/2 h-8 w-8 rounded-full disabled:bg-gray-800 bg-blue-500 transition duration-200 flex items-center justify-center"
-      >
-        {isLoading ? (
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <motion.svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-white h-4 w-4"
+      {/* Image preview */}
+      {image && (
+        <div className="absolute -top-20 right-2 w-16 h-16 rounded-lg overflow-hidden shadow-lg">
+          <img
+            src={image}
+            alt="Upload preview"
+            className="w-full h-full object-cover"
+          />
+          <button
+            type="button"
+            onClick={() => setImage(null)}
+            className="absolute top-1 right-1 bg-black bg-opacity-50 rounded-full p-1"
           >
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <motion.path
-              d="M5 12l14 0"
-              initial={{
-                strokeDasharray: "50%",
-                strokeDashoffset: "50%",
-              }}
-              animate={{
-                strokeDashoffset: value ? 0 : "50%",
-              }}
-              transition={{
-                duration: 0.3,
-                ease: "linear",
-              }}
-            />
-            <path d="M13 18l6 -6" />
-            <path d="M13 6l6 6" />
-          </motion.svg>
-        )}
-      </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-3 w-3 text-white"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
 
+      {/* Placeholder animation */}
       <div className="absolute inset-0 flex items-center rounded-full pointer-events-none">
         <AnimatePresence mode="wait">
-          {!value && (
+          {!value && !image && (
             <motion.p
-              initial={{
-                y: 5,
-                opacity: 0,
-              }}
+              initial={{ y: 5, opacity: 0 }}
               key={`current-placeholder-${currentPlaceholder}`}
-              animate={{
-                y: 0,
-                opacity: 1,
-              }}
-              exit={{
-                y: -15,
-                opacity: 0,
-              }}
-              transition={{
-                duration: 0.3,
-                ease: "linear",
-              }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -15, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "linear" }}
               className="text-gray-400 text-sm sm:text-base font-normal pl-4 sm:pl-12 text-left w-[calc(100%-2rem)] truncate"
             >
               {placeholders[currentPlaceholder]}
