@@ -1,4 +1,3 @@
-// app/actions/chat.ts
 "use server";
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -18,7 +17,10 @@ const model = genAI.getGenerativeModel({
 // Define types for chat history
 interface ChatMessage {
   role: "user" | "model";
-  parts: { text: string }[];
+  parts: Array<
+    | { text: string }
+    | { inlineData: { data: string; mimeType: string } }
+  >;
 }
 
 // Initialize chat history
@@ -81,7 +83,7 @@ export async function generateChatResponse(formData: FormData) {
 export async function processImage(formData: FormData) {
   try {
     const imageFile = formData.get("image") as File;
-    const prompt = formData.get("prompt") as string || `Analyze this image and provide professional advice . +${ai_prompt}`;
+    const prompt = formData.get("prompt") as string || `Analyze this image and provide professional advice . +${ai_prompt} if it is related to the health atlest give some response out of it so the user can get somethign out of it and the user can get some help from the assistant`;
 
     if (!imageFile) {
       return { success: false, error: "No image provided" };
@@ -91,22 +93,46 @@ export async function processImage(formData: FormData) {
     const imageBuffer = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(imageBuffer).toString("base64");
 
+    // Add user message with image to history
+    chatHistory.push({
+      role: "user",
+      parts: [
+        {
+          inlineData: {
+            data: base64Image,
+            mimeType: imageFile.type,
+          }
+        },
+        { text: prompt }
+      ],
+    });
+
     // Generate response with image context
     const result = await model.generateContentStream([
       {
         inlineData: {
           data: base64Image,
           mimeType: imageFile.type,
-        },
+        }
       },
-      {
-        text: prompt,
-      }
+      { text: prompt }
     ]);
 
     let response = "";
     for await (const chunk of result.stream) {
       response += chunk.text();
+    }
+
+    // Add model's response to history
+    chatHistory.push({
+      role: "model",
+      parts: [{ text: response }],
+    });
+
+    // Trim history if too long
+    const MAX_HISTORY = 10;
+    if (chatHistory.length > MAX_HISTORY * 2) {
+      chatHistory = chatHistory.slice(-MAX_HISTORY * 2);
     }
 
     revalidatePath("/chat");

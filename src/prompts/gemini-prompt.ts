@@ -187,5 +187,4 @@ User: "My chest hurts and my left arm feels numb."
         - Suggest health diary maintenance
         - Recommend recording triggers
         - Guide proper documentation for medical visits
-
 `;
