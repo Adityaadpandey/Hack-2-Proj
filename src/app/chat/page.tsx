@@ -1,13 +1,13 @@
 "use client"
 
 import Chatbox from "@/components/ui/Chat"
+import { cn } from "@/lib/utils"
 import Spline from "@splinetool/react-spline"
 import { useEffect, useRef, useState } from "react"
-import { cn } from "@/lib/utils"
 
 export default function ChatInput() {
   const [result, setResult] = useState<string>("")
-  const [convo, setConvo] = useState<{sender: string; text: string}[]>([])
+  const [convo, setConvo] = useState<{ sender: string; text: string }[]>([])
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
   const placeholders = [
@@ -21,12 +21,12 @@ export default function ChatInput() {
   // Update the conversation when result changes
   useEffect(() => {
     if (!result) return
-    
+
     // Split the result into individual messages
     const messages = result.split('\n\n').map(msg => msg.trim())
-    
-    const newConvo: {sender: string; text: string}[] = []
-    
+
+    const newConvo: { sender: string; text: string }[] = []
+
     messages.forEach(msg => {
       if (msg.startsWith('User: ')) {
         newConvo.push({
@@ -40,7 +40,7 @@ export default function ChatInput() {
         })
       }
     })
-    
+
     setConvo(newConvo)
 
     // Scroll to bottom when new messages arrive
@@ -57,9 +57,9 @@ export default function ChatInput() {
       <div className="fixed inset-0 pointer-events-none">
         <Spline scene="https://prod.spline.design/gybooEl40G1Df9Ib/scene.splinecode" />
       </div>
-      
+
       {/* Chat container */}
-      <div 
+      <div
         ref={chatContainerRef}
         className="flex-1 overflow-y-auto px-4 pt-8 pb-32 flex flex-col items-center z-10"
       >
@@ -85,19 +85,19 @@ export default function ChatInput() {
       </div>
 
       {/* Input box */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent z-[999]">
-        <div className="max-w-2xl mx-auto">
-          <Chatbox 
-            placeholders={placeholders} 
-            onChange={() => {}} 
-            onSubmit={() => {}}
+      <div className={`fixed bottom-0 left-0 right-0 p-4 ${convo.length === 0 ? 'pb-56' : 'pb-10'} bg-gradient-to-t from-black to-transparent z-[999]`}>
+        <div className="max-w-xl mx-auto border border-gray-600 rounded-full">
+          <Chatbox
+            placeholders={placeholders}
+            onChange={() => { }}
+            onSubmit={() => { }}
             setResult={(updater: any) => {
               if (typeof updater === 'function') {
                 setResult(prev => updater(prev))
               } else {
                 setResult(updater)
               }
-            }} 
+            }}
           />
         </div>
       </div>
