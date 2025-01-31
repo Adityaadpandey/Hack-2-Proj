@@ -11,10 +11,12 @@ export const HoverEffect = ({
     title: string;
     description: string;
     link: string;
+    pic: string;
   }[];
   className?: string;
 }) => {
   let [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [popup, setPopup] = useState(false);
 
   return (
     <div
@@ -23,13 +25,27 @@ export const HoverEffect = ({
         className
       )}
     >
+        {
+            popup && (
+                <div className="fixed inset-0 bg-white bg-opacity-90 z-50">
+                    <div className="flex justify-center items-center h-full">
+                        <img src={items[hoveredIndex!]?.pic} alt={items[hoveredIndex!]?.title} className="max-w-full max-h-full" />
+                    </div>
+                </div>
+            )
+        }
       {items.map((item, idx) => (
         <Link
           href={item?.link}
           key={item?.link}
           className="relative group  block p-2 h-full w-full"
-          onMouseEnter={() => setHoveredIndex(idx)}
-          onMouseLeave={() => setHoveredIndex(null)}
+          onMouseEnter={() => {
+            setPopup(true);
+            setHoveredIndex(idx);
+          }}
+          onMouseLeave={() => {
+            setHoveredIndex(null);
+          }}
         >
           <AnimatePresence>
             {hoveredIndex === idx && (
