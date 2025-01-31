@@ -12,6 +12,7 @@ function addVariablesForColors({ addBase, theme }: any) {
 	});
 }
 
+/** @type {import('tailwindcss').Config} */
 export default {
 	darkMode: ["class"],
 	content: [
