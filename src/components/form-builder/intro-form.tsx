@@ -272,7 +272,7 @@ function App() {
                                         }
                                     />
                                     <div className="flex gap-2 mt-2 flex-wrap">
-                                        {["known allergies", "Diabetic", "Hypertension", "Asthma"].map((item, index) => (
+                                        {["Smoking", "Drinking", "Drugs", "Excercise"].map((item, index) => (
                                             <button
                                                 key={index}
                                                 type="button"
@@ -297,10 +297,10 @@ function App() {
 
                         <div className="flex gap-4 pt-4">
                             <Button type="submit" className="flex-1">
-                                Next
+                                Submit
                                 <ArrowRight className="ml-2 h-5 w-5" />
                             </Button>
-                            <Button type="button" variant="secondary" className="flex-1" onClick={handleReset}>
+                            <Button type="button" variant="secondary" className="flex-1" onClick={showDocumentUpload}>
                                 Reset
                                 <RotateCcw className="ml-2 h-5 w-5" />
                             </Button>
