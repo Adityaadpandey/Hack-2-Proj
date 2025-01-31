@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Activity, ArrowRight, Calendar, RotateCcw, Ruler, User, Weight } from 'lucide-react';
+import { ArrowRight, Calendar, RotateCcw, Ruler, User, Weight } from 'lucide-react';
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -17,6 +17,7 @@ interface DocumentUpload {
     medicalHistory: File | null;
     labReports: File | null;
     insuranceCard: File | null;
+
 }
 
 function App() {
@@ -230,7 +231,7 @@ function App() {
 
 
                             {/* Lab Reports */}
-                            <div>
+                            {/* <div>
                                 <label className="block text-sm font-medium text-zinc-300 mb-2">Lab Reports</label>
                                 <div className="relative">
                                     <div className="flex items-center gap-4">
@@ -252,7 +253,46 @@ function App() {
                                         </div>
                                     </div>
                                 </div>
+                            </div> */}
+
+                            {/* Current Lifestyle */}
+
+                            <div>
+                                <label className="block text-sm font-medium text-zinc-300 mb-2">Lifestyle Information</label>
+                                <div className="relative">
+                                    <textarea
+                                        className="w-full h-32 p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors text-white placeholder-zinc-500"
+                                        placeholder="Enter your medical history"
+                                        value={documents.lifestyle_info || ""}
+                                        onChange={(e) =>
+                                            setDocuments((prev) => ({
+                                                ...prev,
+                                                lifestyle_info: e.target.value,
+                                            }))
+                                        }
+                                    />
+                                    <div className="flex gap-2 mt-2 flex-wrap">
+                                        {["known allergies", "Diabetic", "Hypertension", "Asthma"].map((item, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                className="px-2 py-1 text-white rounded-lg border border-zinc-700 bg-transparent hover:bg-zinc-700 transition-colors"
+                                                onClick={() =>
+                                                    setDocuments((prev) => ({
+                                                        ...prev,
+                                                        lifestyle_info: prev.lifestyle_info
+                                                            ? `${prev.lifestyle_info}\n${item}`
+                                                            : item,
+                                                    }))
+                                                }
+                                            >
+                                                {item}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
+
                         </div>
 
                         <div className="flex gap-4 pt-4">
