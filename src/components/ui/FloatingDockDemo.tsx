@@ -1,13 +1,10 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-import { ClerkProvider, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs"; // Import Clerk
+import { ClerkProvider, SignedOut, SignInButton } from "@clerk/nextjs"; // Import Clerk
 import {
-    IconBrandGithub,
-    IconBrandX,
-    IconExchange,
     IconHome,
     IconNewSection,
     IconSearch,
-    IconTerminal2,
+    IconTerminal2
 } from "@tabler/icons-react";
 
 export function FloatingDockDemo() {
