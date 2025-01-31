@@ -135,7 +135,17 @@ Visit `http://localhost:3000` to see the chatbot in action! 🚀
 ├── components.json
 ├── eslint.config.mjs
 ```
+## 🛡️ Security & Privacy
+- Data encryption is used to secure user interactions.
+- OAuth & JWT authentication ensures safe user logins.
+- No sensitive personal health data is stored.
 
+## 🏆 Future Roadmap
+- ✅ Expand AI capabilities for diagnosing common illnesses.
+- ✅ Integrate voice assistance.
+- 🔜 Add multilingual support.
+- 🔜 Enable blockchain-based health record storage.
+- 🔜 Integrate with wearable health devices.
 
 <!--## 📬 Contact & Support
 📧 Email: support@trexhealth.com  
@@ -143,4 +153,4 @@ Visit `http://localhost:3000` to see the chatbot in action! 🚀
 🐦 Twitter: @trex_health   
 📘 LinkedIn: T-Rex AI Health  -->
   
-**🚀 Pulse-AI: Your AI-Powered Health Assistant! 🏥💙**
+### 🚀 Pulse-AI: Your AI-Powered Health Assistant! 🏥💙
