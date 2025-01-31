@@ -1,15 +1,6 @@
 import { FloatingDock } from "@/components/ui/floating-dock";
-<<<<<<< HEAD
-import { ClerkProvider, SignedOut, SignInButton } from "@clerk/nextjs"; // Import Clerk
-import {
-    IconHome,
-    IconNewSection,
-    IconSearch,
-    IconTerminal2
-=======
 import {
     IconHome
->>>>>>> f71ba84 (nice)
 } from "@tabler/icons-react";
 import { Bot, MessageCircleMore } from "lucide-react";
 
