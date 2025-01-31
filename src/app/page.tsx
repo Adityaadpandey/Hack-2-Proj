@@ -1,12 +1,9 @@
-'use client'
 import Main from "@/components/Main";
 import { FloatingDockDemo } from "@/components/ui/FloatingDockDemo";
 import { ArrowRight, Clock, MessageCircle, Shield } from 'lucide-react';
 import Link from "next/link";
-import Navigate, { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const router = useRouter();
   const features = [
     {
       icon: <Shield className="w-6 h-6 text-blue-400" />,

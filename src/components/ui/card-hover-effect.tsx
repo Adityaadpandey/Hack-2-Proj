@@ -1,7 +1,8 @@
+'use client'
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const HoverEffect = ({
   items,
@@ -16,7 +17,22 @@ export const HoverEffect = ({
   className?: string;
 }) => {
   let [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [popup, setPopup] = useState(false);
+  const [popup, setPopup] = useState({x: 0, y:0});
+  useEffect(() => {
+    // const ele = document.getElementById("popup");
+    const tile = document.elementFromPoint(popup.x, popup.y) as HTMLElement;
+    if (tile) {
+      tile.style.backgroundImage = `url(${items[hoveredIndex!]?.pic})`;
+      tile.style.backgroundSize = "contain";
+      tile.style.backgroundPosition = "center";
+      tile.style.backgroundRepeat = "no-repeat";
+    }
+    // if (ele && tile) {
+    // ele.style.top = `${tile.getBoundingClientRect().top}px`;
+    // ele.style.left = `${tile.getBoundingClientRect().left - ele.offsetWidth}px`;
+    // ele.style.height = `${tile.getBoundingClientRect().height}px`;
+    // }
+  }, [popup]);
 
   return (
     <div
@@ -25,25 +41,26 @@ export const HoverEffect = ({
         className
       )}
     >
-        {
+        {/* {
             popup && (
-                <div className="fixed inset-0 bg-white bg-opacity-90 z-50">
+                <div className="fixed inset-0 bg-white bg-opacity-90 h-10 w-fit z-50" id="popup">
                     <div className="flex justify-center items-center h-full">
-                        <img src={items[hoveredIndex!]?.pic} alt={items[hoveredIndex!]?.title} className="max-w-full max-h-full" />
+                        <img src={items[hoveredIndex!]?.pic} alt={items[hoveredIndex!]?.title} className="h-full" />
                     </div>
                 </div>
             )
-        }
+        } */}
       {items.map((item, idx) => (
         <Link
           href={item?.link}
           key={item?.link}
           className="relative group  block p-2 h-full w-full"
-          onMouseEnter={() => {
-            setPopup(true);
+          onMouseEnter={(e) => {
+            setPopup({x: e.clientX, y: e.clientY});
             setHoveredIndex(idx);
           }}
           onMouseLeave={() => {
+            setPopup({x: 0, y: 0});
             setHoveredIndex(null);
           }}
         >
