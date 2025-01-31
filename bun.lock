@@ -1,8 +1,7 @@
 {
-  "lockfileVersion": 1,
+  "lockfileVersion": 0,
   "workspaces": {
     "": {
-      "name": "trex",
       "dependencies": {
         "@clerk/nextjs": "^6.10.4",
         "@google/generative-ai": "^0.21.0",
