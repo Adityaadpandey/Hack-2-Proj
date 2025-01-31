@@ -1,78 +1,106 @@
 "use client"
 
-import { generateChatResponse } from "@/prompts"
-import { useRef, useState } from "react"
+import Chatbox from "@/components/ui/Chat"
+import Spline from "@splinetool/react-spline"
+import { useEffect, useRef, useState } from "react"
+import { cn } from "@/lib/utils"
 
 export default function ChatInput() {
-    const [response, setResponse] = useState<string>("")
-    const [isLoading, setIsLoading] = useState(false)
-    const formRef = useRef<HTMLFormElement>(null)
+  const [result, setResult] = useState<string>("")
+  const [convo, setConvo] = useState<{sender: string; text: string}[]>([])
+  const chatContainerRef = useRef<HTMLDivElement>(null)
 
-    async function handleSubmit(formData: FormData) {
-        setIsLoading(true)
-        setResponse("")
+  const placeholders = [
+    "What are the symptoms of the flu?",
+    "How can I lower my blood pressure naturally?",
+    "What's the recommended daily water intake?",
+    "Can you explain what BMI means?",
+    "What are common signs of vitamin D deficiency?",
+  ]
 
-        try {
-            const stream = await generateChatResponse(formData)
-            const reader = stream.getReader()
+  // Update the conversation when result changes
+  useEffect(() => {
+    if (!result) return
+    
+    // Split the result into individual messages
+    const messages = result.split('\n\n').map(msg => msg.trim())
+    
+    const newConvo: {sender: string; text: string}[] = []
+    
+    messages.forEach(msg => {
+      if (msg.startsWith('User: ')) {
+        newConvo.push({
+          sender: 'user',
+          text: msg.replace('User: ', '').trim()
+        })
+      } else if (msg.startsWith('Assistant: ')) {
+        newConvo.push({
+          sender: 'ai',
+          text: msg.replace('Assistant: ', '').trim()
+        })
+      }
+    })
+    
+    setConvo(newConvo)
 
-            while (true) {
-                const { done, value } = await reader.read()
-                if (done) break
+    // Scroll to bottom when new messages arrive
+    setTimeout(() => {
+      if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+      }
+    }, 100)
+  }, [result])
 
-                setResponse(prev => prev + value)
-            }
-
-            formRef.current?.reset()
-        } catch (error) {
-            console.error('Error:', error)
-            setResponse("An error occurred. Please try again.")
-        } finally {
-            setIsLoading(false)
-        }
-    }
-
-    async function handleClearHistory() {
-        // await clearChatHistory()
-        setResponse("")
-    }
-
-    return (
-        <div className="space-y-4">
-            <form
-                ref={formRef}
-                action={handleSubmit}
-                className="space-y-4"
-            >
-                <textarea
-                    name="prompt"
-                    className="w-full p-4 border rounded-lg resize-none"
-                    placeholder="Ask your question..."
-                    rows={4}
-                />
-                <div className="flex gap-2">
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="flex-1 py-2 px-4 bg-blue-500 text-white rounded-lg disabled:opacity-50"
-                    >
-                        {isLoading ? "Generating..." : "Send Message"}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleClearHistory}
-                        className="py-2 px-4 bg-gray-500 text-white rounded-lg"
-                    >
-                        Clear History
-                    </button>
-                </div>
-            </form>
-
-            {response && (
-                <div className="p-4 bg-gray-50 rounded-lg">
-                    <p className="whitespace-pre-wrap">{response}</p>
-                </div>
-            )}
+  return (
+    <div className="bg-black h-screen w-screen relative flex flex-col">
+      {/* Spline background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <Spline scene="https://prod.spline.design/gybooEl40G1Df9Ib/scene.splinecode" />
+      </div>
+      
+      {/* Chat container */}
+      <div 
+        ref={chatContainerRef}
+        className="flex-1 overflow-y-auto px-4 pt-8 pb-32 flex flex-col items-center z-10"
+      >
+        <div className="w-full max-w-2xl space-y-4">
+          {convo.length === 0 && (
+            <div className="text-gray-500 text-center pt-8">
+              Start a conversation by typing a message below
+            </div>
+          )}
+          {convo.map((item, index) => (
+            <div key={index} className="flex flex-col animate-fade-in">
+              <div className={cn(
+                "max-w-[80%] p-4 rounded-2xl",
+                item.sender === "user"
+                  ? "ml-auto bg-primary text-primary-foreground rounded-br-none"
+                  : "bg-muted rounded-bl-none"
+              )}>
+                {item.text}
+              </div>
+            </div>
+          ))}
         </div>
-    )
+      </div>
+
+      {/* Input box */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black to-transparent z-[999]">
+        <div className="max-w-2xl mx-auto">
+          <Chatbox 
+            placeholders={placeholders} 
+            onChange={() => {}} 
+            onSubmit={() => {}}
+            setResult={(updater: any) => {
+              if (typeof updater === 'function') {
+                setResult(prev => updater(prev))
+              } else {
+                setResult(updater)
+              }
+            }} 
+          />
+        </div>
+      </div>
+    </div>
+  )
 }

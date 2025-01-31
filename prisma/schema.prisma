@@ -26,13 +26,22 @@ model User {
 }
 
 model Report {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  title       String
-  description String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String    @id @default(uuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id])
+  dob                DateTime?
+  gender             String?
+  bloodGroup         String?
+  weight             Float?
+  height             Float?
+  allergies          String[]
+  medications        String[]
+  existing_condition String[]
+  ongoing_medication String[]
+  lifestyle_info     String?
+  data_from_source   String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }
 
 model Chat {
